@@ -1,0 +1,49 @@
+http:
+  # --- Middlewares ---
+  middlewares:
+    traefikAuth:
+      basicAuth:
+        usersFile: "/etc/traefik/usersfile"
+
+    default-security-headers:
+      headers:
+        browserXssFilter: true                # X-XSS-Protection=1; mode=block
+        contentTypeNosniff: true              # X-Content-Type-Options=nosniff
+        frameDeny: true                       # X-Frame-Options=deny
+        stsIncludeSubdomains: true            # Add includeSubdomains to the Strict-Transport-Security header
+        stsPreload: true                      # Add preload flag appended to the Strict-Transport-Security header
+        stsSeconds: 63072000                  # Set the max-age of the Strict-Transport-Security header (63072000 = 2 years)
+        customFrameOptionsValue: "SAMEORIGIN"
+        customResponseHeaders:                # Remove unnessesary headers which expose used server software
+          server: ""
+          x-powered-by: ""
+
+    default-auth:
+      chain:
+        middlewares:
+          - traefikAuth
+          - default-security-headers
+
+    default:
+      chain:
+        middlewares:
+          - default-security-headers
+
+  # --- Routers ---
+  routers:
+    nas:
+      rule: "Host(`nas.{{env "DOMAIN_NAME"}}`)"
+      service: nas
+      entrypoints:
+        - https
+      middlewares:
+        - default
+      tls:
+        certResolver: cloudflare
+
+  # --- Services ---
+  services:
+    nas:
+      loadBalancer:
+        servers:
+          - url: "http://10.0.0.20:5000"

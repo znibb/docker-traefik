@@ -1,0 +1,52 @@
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+serversTransport:
+  insecureSkipVerify: true
+
+log:
+  #level: DEBUG
+  level: INFO
+  #level: ERROR
+
+api:
+  insecure: false
+  dashboard: true
+  debug: false
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: "traefik"
+  file:
+    directory: "/etc/traefik/"
+    watch: true
+
+entrypoints:
+  http:
+    address: ":80"
+    http:
+      redirections:
+        entrypoint:
+          to: "https"
+          scheme: "https"
+  https:
+    address: ":443"
+  ping:
+    address: ":8080"
+
+ping:
+  entrypoint: "ping"
+
+certificatesResolvers:
+  cloudflare:
+    acme:
+      email: pontus.pson@gmail.com
+      storage: acme.json
+      dnsChallenge:
+        provider: cloudflare
+        resolvers:
+          - "1.1.1.1:53"
+          - "1.0.0.1:53"

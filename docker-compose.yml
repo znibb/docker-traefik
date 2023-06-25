@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    hostname: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges=true
+    secrets:
+      - "cf_api_email"
+      - "cf_api_key"
+    env_file:
+      - .env
+    environment:
+      - "CF_API_EMAIL_FILE=/run/secrets/cf_api_email"
+      - "CF_API_KEY_FILE=/run/secrets/cf_api_key"
+    labels:
+     - com.centurylabs.watchtower.enable=true
+     - traefik.enable=true
+     - traefik.http.routers.traefik.entrypoints=https
+     - traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN_NAME}`)
+     - traefik.http.routers.traefik.service=api@internal
+     - traefik.http.routers.traefik.tls=true
+     - traefik.http.routers.traefik.tls.certresolver=cloudflare
+     - traefik.http.routers.traefik.middlewares=default-auth@file
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./cert/acme.json:/acme.json
+      - ./static_config.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic_config.yml:/etc/traefik/config.yml
+      - ./usersfile:/etc/traefik/usersfile:ro
+
+networks:
+  default:
+    external:
+      name: traefik
+
+secrets:
+  cf_api_email:
+    file: "./secrets/CF_API_EMAIL.secret"
+  cf_api_key:
+    file: "./secrets/CF_API_KEY.secret"
