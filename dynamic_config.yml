@@ -45,5 +45,6 @@ http:
   services:
     nas:
       loadBalancer:
+        passHostHeader: true
         servers:
-          - url: "http://10.0.0.20:5000"
+          - url: "https://10.0.0.20:5001"
