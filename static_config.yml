@@ -36,6 +36,8 @@ entrypoints:
     address: ":443"
   ping:
     address: ":8080"
+  mqtt:
+    address: ":8883"
 
 ping:
   entrypoint: "ping"
