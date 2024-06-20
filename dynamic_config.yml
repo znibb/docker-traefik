@@ -32,7 +32,7 @@ http:
   # --- Routers ---
   routers:
     nas:
-      rule: "Host(`nas.{{env "DOMAIN_NAME"}}`)"
+      rule: "Host(`nas.{{env "TRAEFIK_DOMAIN"}}`)"
       service: nas
       entrypoints:
         - https
