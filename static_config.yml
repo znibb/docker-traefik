@@ -6,9 +6,12 @@ serversTransport:
   insecureSkipVerify: true
 
 log:
-  #level: DEBUG
+  # level: DEBUG
   level: INFO
-  #level: ERROR
+  # level: ERROR
+
+# accesslog:
+#   addInternals: false
 
 api:
   insecure: false
