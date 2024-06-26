@@ -16,6 +16,7 @@ services:
     environment:
       CF_API_EMAIL_FILE: /run/secrets/cf_api_email
       CF_API_KEY_FILE: /run/secrets/cf_api_key
+      TRAEFIK_DOMAIN: ${TRAEFIK_DOMAIN:?}
     labels:
      - com.centurylabs.watchtower.enable=true
      - traefik.enable=true
