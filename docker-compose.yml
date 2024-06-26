@@ -13,8 +13,6 @@ services:
     secrets:
       - "cf_api_email"
       - "cf_api_key"
-    env_file:
-      - .env
     environment:
       CF_API_EMAIL_FILE: /run/secrets/cf_api_email
       CF_API_KEY_FILE: /run/secrets/cf_api_key
@@ -26,7 +24,7 @@ services:
      - traefik.http.routers.traefik.service=api@internal
      - traefik.http.routers.traefik.tls=true
      - traefik.http.routers.traefik.tls.certresolver=cloudflare
-     - traefik.http.routers.traefik.middlewares=default-auth@file
+     - traefik.http.routers.traefik.middlewares=authentik@file
     networks:
       - traefik
     ports:
