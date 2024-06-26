@@ -11,7 +11,7 @@ log:
   # level: ERROR
 
 # accesslog:
-#   addInternals: false
+  # addInternals: false
 
 api:
   insecure: false

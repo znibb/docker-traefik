@@ -1,6 +1,7 @@
 http:
   # --- Middlewares ---
   middlewares:
+    # Default middleware for redirecting docker services to Authentik portal
     authentik-auth:
       forwardAuth:
         # Match base url to authentik server container name
@@ -18,6 +19,8 @@ http:
           - X-authentik-meta-provider
           - X-authentik-meta-app
           - X-authentik-meta-version
+
+    # Variant middleware to enable HTTP-Basic auth forwarding
     authentik-auth-http:
       forwardAuth:
         # Match base url to authentik server container name
@@ -83,7 +86,7 @@ http:
       entrypoints:
         - https
       middlewares:
-        - default
+        - authentik
       tls:
         certResolver: cloudflare
 
