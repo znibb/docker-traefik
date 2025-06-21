@@ -48,7 +48,7 @@ ping:
 certificatesResolvers:
   cloudflare:
     acme:
-      email: pontus.pson@gmail.com
+      email: cloudflare@b3rl1n.com
       storage: acme.json
       dnsChallenge:
         provider: cloudflare
