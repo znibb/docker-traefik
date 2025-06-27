@@ -1,4 +1,4 @@
 .env
-cert/acme.json
+cert/*
 secrets/*
 usersfile

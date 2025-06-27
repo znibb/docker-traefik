@@ -52,6 +52,8 @@ certificatesResolvers:
       storage: acme.json
       dnsChallenge:
         provider: cloudflare
+        propagation:
+          delayBeforeChecks: 10
         resolvers:
           - "1.1.1.1:53"
           - "1.0.0.1:53"

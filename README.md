@@ -15,7 +15,11 @@ Add to `usersfile` as `user:<hash>`.
 1. Add your user to `usersfile` (don't forget to remove the example user!)
 1. Input your domain name in `.env`
 1. Input your Cloudflare API email in `secrets/CF_API_EMAIL.secret`
-1. Input your Cloudflare Global API key in `secrets/CF_API_KEY.secret` (get it from the Cloudflare [dashboard](https://dash.cloudflare.com/profile/api-tokens))
+1. Go to the Cloudflare [dashboard](https://dash.cloudflare.com/profile/api-tokens to create an API token.
+1. Create a `Custom token` and select the following permissions:
+    - Zone->DNS - Edit
+    - Zone->Zone - Read
+1. Input your Cloudflare API token in `secrets/CF_DNS_API_TOKEN.secret` 
 1. Ensure that `cert/acme.json` has 600 permissions
 1. Create proxy network for communication with other applications, `docker network create traefik`
 1. Run `docker-compose up` and check logs
