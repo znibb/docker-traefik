@@ -15,7 +15,7 @@ Add to `usersfile` as `user:<hash>`.
 1. Add your user to `usersfile` (don't forget to remove the example user!)
 1. Input your domain name in `.env`
 1. Input your Cloudflare API email in `secrets/CF_API_EMAIL.secret`
-1. Go to the Cloudflare [dashboard](https://dash.cloudflare.com/profile/api-tokens to create an API token.
+1. Go to the Cloudflare [dashboard](https://dash.cloudflare.com/profile/api-tokens) to create an API token.
 1. Create a `Custom token` and select the following permissions:
     - Zone->DNS - Edit
     - Zone->Zone - Read
