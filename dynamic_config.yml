@@ -80,20 +80,43 @@ http:
 
   # --- Routers ---
   routers:
-    nas:
-      rule: "Host(`nas.{{env "TRAEFIK_DOMAIN"}}`)"
-      service: nas
+    traefik-dashboard:
+      rule: "Host(`traefik.{{env "TRAEFIK_DOMAIN"}}`)"
+      service: api@internal
+      entryPoints:
+        - websecure
+      middlewares:
+        - authentik@file
+
+    home-assistant-api:
+      priority: 200
+      rule: "Host(`hass.{{env "TRAEFIK_DOMAIN"}}`) && (
+        PathPrefix(`/auth`) ||
+        PathPrefix(`/api`) ||
+        PathPrefix(`/local`) ||
+        PathPrefix(`/frontend_latest`)
+      )"
+      service: home-assistant
       entrypoints:
-        - https
-      # middlewares:
-      #   - authentik
-      tls:
-        certResolver: cloudflare
+        - websecure
+
+    home-assistant:
+      priority: 100
+      rule: "Host(`hass.{{env "TRAEFIK_DOMAIN"}}`)"
+      service: home-assistant
+      entrypoints:
+        - websecure
+      middlewares:
+        - authentik@file
+      # tls:
+      #   certResolver: cloudflare
+
+
 
   # --- Services ---
   services:
-    nas:
+    home-assistant:
       loadBalancer:
-        passHostHeader: true
+        # passHostHeader: true
         servers:
-          - url: "https://10.0.0.20:5001"
+          - url: "http://10.0.0.29:8123"
