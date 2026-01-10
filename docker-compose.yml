@@ -1,6 +1,8 @@
 services:
   traefik:
-    image: traefik:v3.4.1
+    # https://hub.docker.com/_/traefik
+    # image: traefik:v3.4.1
+    image: traefik:v3.6.6
     container_name: traefik
     restart: unless-stopped
     healthcheck:
@@ -14,28 +16,84 @@ services:
       - cf_api_email
       - cf_dns_api_token
     environment:
-      CF_API_EMAIL_FILE: /run/secrets/cf_api_email
+      # Docker Secrets
       CF_DNS_API_TOKEN_FILE: /run/secrets/cf_dns_api_token
+
+      # env
       TRAEFIK_DOMAIN: ${TRAEFIK_DOMAIN:?}
-    labels:
-     - traefik.enable=true
-     - traefik.http.routers.traefik.service=api@internal
-     - traefik.http.routers.traefik.rule=Host(`traefik.${TRAEFIK_DOMAIN:?}`)
-     - traefik.http.routers.traefik.entrypoints=https
-     - traefik.http.routers.traefik.tls=true
-     - traefik.http.routers.traefik.tls.certresolver=cloudflare
-     - traefik.http.routers.traefik.middlewares=authentik@file
+
+      # Startup/static config (can't use env vars if passed as a file)
+      # API
+      TRAEFIK_API: true
+      TRAEFIK_API_DASHBOARD: true
+      TRAEFIK_API_DEBUG: false
+      TRAEFIK_API_INSECURE: false
+
+      # CertificatesResolvers
+      TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE: true
+      TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_DNSCHALLENGE_PROPAGATION_DELAYBEFORECHECKS: 30
+      TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_DNSCHALLENGE_PROVIDER: cloudflare
+      TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_DNSCHALLENGE_RESOLVERS: 1.1.1.1:53,1.0.0.1:53
+      TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_EMAIL: ${CLOUDFLARE_EMAIL:?}
+      TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_STORAGE: acme.json
+
+      # Entrypoints
+      ## web / http
+      TRAEFIK_ENTRYPOINTS_web: true
+      TRAEFIK_ENTRYPOINTS_web_ADDRESS: :80
+      TRAEFIK_ENTRYPOINTS_web_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME: https
+      TRAEFIK_ENTRYPOINTS_web_HTTP_REDIRECTIONS_ENTRYPOINT_TO: websecure
+
+      ## websecure / https
+      TRAEFIK_ENTRYPOINTS_websecure: true
+      TRAEFIK_ENTRYPOINTS_websecure_ADDRESS: :443
+      TRAEFIK_ENTRYPOINTS_websecure_HTTP_TLS: true
+      TRAEFIK_ENTRYPOINTS_websecure_HTTP_TLS_CERTRESOLVER: cloudflare
+
+      ## mqtt
+      TRAEFIK_ENTRYPOINTS_MQTT: true
+      TRAEFIK_ENTRYPOINTS_MQTT_ADDRESS: :8080
+
+      ## ping
+      TRAEFIK_ENTRYPOINTS_PING: true
+      TRAEFIK_ENTRYPOINTS_PING_ADDRESS: :8883
+
+      # Global
+      TRAEFIK_GLOBAL_CHECKNEWVERSION: false
+      TRAEFIK_GLOBAL_SENDANONYMOUSUSAGE: false
+
+      # Log
+      TRAEFIK_LOG: true
+      TRAEFIK_LOG_LEVEL: INFO # DEBUG/INFO/WARNING/ERROR/FATAL/PANIC
+
+      # Ping
+      TRAEFIK_PING: true
+      TRAEFIK_PING_ENTRYPOINT: ping
+
+      # Providers
+      ## docker
+      TRAEFIK_PROVIDERS_DOCKER: true
+      TRAEFIK_PROVIDERS_DOCKER_ENDPOINT: unix:///var/run/docker.sock
+      TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT: false
+      TRAEFIK_PROVIDERS_DOCKER_NETWORK: traefik
+
+      ## file
+      TRAEFIK_PROVIDERS_FILE_DIRECTORY: /etc/traefik/
+      TRAEFIK_PROVIDERS_FILE_WATCH: true
+
+      # ServersTransport
+      TRAEFIK_SERVERSTRANSPORT_INSECURESKIPVERIFY: false
     networks:
       - traefik
     ports:
       - 80:80
       - 443:443
       - 8883:8883
+      - 8080:8080
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./cert/acme.json:/acme.json
-      - ./static_config.yml:/etc/traefik/traefik.yml:ro
       - ./dynamic_config.yml:/etc/traefik/config.yml
       - ./usersfile:/etc/traefik/usersfile:ro
 
