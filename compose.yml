@@ -1,8 +1,7 @@
 services:
   traefik:
-    # https://hub.docker.com/_/traefik
-    # image: traefik:v3.4.1
-    image: traefik:v3.6.6
+    # https://hub.docker.com/_/traefik/tags
+    image: traefik:v3.6.15
     container_name: traefik
     restart: unless-stopped
     healthcheck:
