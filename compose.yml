@@ -9,6 +9,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     security_opt:
       - no-new-privileges=true
     secrets:
@@ -20,6 +25,7 @@ services:
 
       # env
       TRAEFIK_DOMAIN: ${TRAEFIK_DOMAIN:?}
+      CROWDSEC_LAPI_KEY: ${LAPI_KEY}
 
       # Startup/static config (can't use env vars if passed as a file)
       # API
@@ -40,12 +46,14 @@ services:
       ## web / http
       TRAEFIK_ENTRYPOINTS_web: true
       TRAEFIK_ENTRYPOINTS_web_ADDRESS: :80
+      TRAEFIK_ENTRYPOINTS_web_FORWARDEDHEADERS_TRUSTEDIPS: "103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,104.16.0.0/13,104.24.0.0/14,108.162.192.0/18,131.0.72.0/22,141.101.64.0/18,162.158.0.0/15,172.64.0.0/13,173.245.48.0/20,188.114.96.0/20,190.93.240.0/20,197.234.240.0/22,198.41.128.0/17,2400:cb00::/32,2606:4700::/32,2803:f800::/32,2405:b500::/32,2405:8100::/32,2a06:98c0::/29,2c0f:f248::/32"
       TRAEFIK_ENTRYPOINTS_web_HTTP_REDIRECTIONS_ENTRYPOINT_SCHEME: https
       TRAEFIK_ENTRYPOINTS_web_HTTP_REDIRECTIONS_ENTRYPOINT_TO: websecure
 
       ## websecure / https
       TRAEFIK_ENTRYPOINTS_websecure: true
       TRAEFIK_ENTRYPOINTS_websecure_ADDRESS: :443
+      TRAEFIK_ENTRYPOINTS_websecure_FORWARDEDHEADERS_TRUSTEDIPS: "103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,104.16.0.0/13,104.24.0.0/14,108.162.192.0/18,131.0.72.0/22,141.101.64.0/18,162.158.0.0/15,172.64.0.0/13,173.245.48.0/20,188.114.96.0/20,190.93.240.0/20,197.234.240.0/22,198.41.128.0/17,2400:cb00::/32,2606:4700::/32,2803:f800::/32,2405:b500::/32,2405:8100::/32,2a06:98c0::/29,2c0f:f248::/32"
       TRAEFIK_ENTRYPOINTS_websecure_HTTP_TLS: true
       TRAEFIK_ENTRYPOINTS_websecure_HTTP_TLS_CERTRESOLVER: cloudflare
 
@@ -65,9 +73,23 @@ services:
       TRAEFIK_LOG: true
       TRAEFIK_LOG_LEVEL: INFO # DEBUG/INFO/WARNING/ERROR/FATAL/PANIC
 
+      # Access log
+      TRAEFIK_ACCESSLOG: true
+      TRAEFIK_ACCESSLOG_BUFFERINGSIZE: 0
+      TRAEFIK_ACCESSLOG_FIELDS_HEADERS_DEFAULTMODE: drop
+      TRAEFIK_ACCESSLOG_FIELDS_HEADERS_NAMES_USER-AGENT: keep
+      TRAEFIK_ACCESSLOG_FILEPATH: /logs/traefik.log
+      TRAEFIK_ACCESSLOG_FORMAT: json
+      TRAEFIK_ACCESSLOG_FILTERS_STATUSCODES: 200-299,400-599
+
       # Ping
       TRAEFIK_PING: true
       TRAEFIK_PING_ENTRYPOINT: ping
+
+      # Plugins
+      TRAEFIK_EXPERIMENTAL_PLUGINS_bouncer_MODULENAME: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+      TRAEFIK_EXPERIMENTAL_PLUGINS_bouncer_VERSION: v1.6.0
+      
 
       # Providers
       ## docker
@@ -95,6 +117,42 @@ services:
       - ./cert/acme.json:/acme.json
       - ./dynamic_config.yml:/etc/traefik/config.yml
       - ./usersfile:/etc/traefik/usersfile:ro
+      - traefik-logs:/logs
+
+  crowdsec:
+    # https://hub.docker.com/r/crowdsecurity/crowdsec/tags
+    image: crowdsecurity/crowdsec:v1.7.7
+    container_name: crowdsec
+    restart: unless-stopped
+    environment:
+      GID: ${GID:-1001}
+      COLLECTIONS: >-
+        crowdsecurity/traefik
+        crowdsecurity/http-cve
+        crowdsecurity/base-http-scenarios
+        crowdsecurity/sshd
+        crowdsecurity/linux
+        crowdsecurity/appsec-generic-rules
+        crowdsecurity/appsec-virtual-patching
+        crowdsecurity/appsec-crs
+      CONFIG_FILE: /etc/crowdsec/config.yaml
+    networks:
+      - traefik
+    ports:
+      - 9876:8080 # http API for bouncers
+      - 6060:6060 # metrics endpoint for prometheus
+      - 7422:7422 # appsec waf endpoint
+    volumes:
+      # data dir
+      - ${DATA_DIR:?}:/var/lib/crowdsec/data
+      # database dir
+      - ${DB_DIR:?}:/etc/crowdsec
+      - ./files/crowdsec-appsec.yaml:/etc/crowdsec/acquis.d/crowdsec-appsec.yaml
+      - ./files/crowdsec-traefik.yaml:/etc/crowdsec/acquis.d/crowdsec-traefik.yaml
+      # logs
+      - traefik-logs:/var/log/traefik:ro
+    depends_on:
+      - traefik
 
 networks:
   traefik:
@@ -105,3 +163,7 @@ secrets:
     file: ./secrets/CF_API_EMAIL.secret
   cf_dns_api_token:
     file: ./secrets/CF_DNS_API_TOKEN.secret
+
+volumes:
+  traefik-logs:
+    name: traefik-logs

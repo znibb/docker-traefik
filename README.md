@@ -12,6 +12,7 @@ Add to `usersfile` as `user:<hash>`.
 1. Create another A record with the name "*" that's pointing to the same IP as the record above (suggestion: use [ddclient](https://github.com/znibb/docker-ddclient) to keep DNS records up to date)
 
 ## Docker Setup
+### Traefik
 1. Add your user to `usersfile` (don't forget to remove the example user!)
 1. Input your domain name in `.env`
 1. Input your Cloudflare API email in `secrets/CF_API_EMAIL.secret`
@@ -23,3 +24,8 @@ Add to `usersfile` as `user:<hash>`.
 1. Ensure that `cert/acme.json` has 600 permissions
 1. Create proxy network for communication with other applications, `docker network create traefik`
 1. Run `docker-compose up` and check logs
+
+### Crowdsec
+1. Generate a bouncer API key by running: `docker compose exec crowdsec cscli bouncers add traefik-bouncer`
+2. Copy the generated key and put it under `LAPI_KEY` in `.env`
+3. Restart the `traefik` container to have it load the new env var: `docker compose up -d --force-recreate traefik`
