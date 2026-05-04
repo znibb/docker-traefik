@@ -1,5 +1,6 @@
 source: file
 filenames:
   - /var/log/traefik/*.log
+max_buffer_size: 1048576
 labels:
   type: traefik
