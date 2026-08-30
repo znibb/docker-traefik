@@ -89,24 +89,24 @@ http:
       chain:
         middlewares:
           - authentik-auth
-          - crowdsec
+#          - crowdsec
           - default-security-headers
     authentik-http:
       chain:
         middlewares:
           - authentik-auth-http
-          - crowdsec
+#          - crowdsec
           - default-security-headers
     default-auth:
       chain:
         middlewares:
           - traefikAuth
-          - crowdsec
+#          - crowdsec
           - default-security-headers
     default:
       chain:
         middlewares:
-          - crowdsec
+#          - crowdsec
           - default-security-headers
 
   # --- Routers ---
